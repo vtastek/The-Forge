@@ -298,23 +298,28 @@ def hlsl(platform, debug, binary: ShaderBinary, dst):
                                 fix_line = False
                                 fixed_register_substring = ''
                                 resource_type_letter = register_subtring[open_parenthesis_index+1:open_parenthesis_index+2]
-                                if resource_type_letter is 's':
+                                # NOTE: use == not `is`. `is` compares object identity; on some CPython
+                                # builds (observed: Windows 3.11.0) single-char string slices are NOT the
+                                # interned singleton, so `letter is 'b'/'t'/'s'` returns False and only
+                                # 'u' happened to match. That silently skipped CBV/SRV/sampler register
+                                # reassignment, leaving every 2nd+ resource in a set aliased to slot 0.
+                                if resource_type_letter == 's':
                                     fixed_register_substring = replace_d3d_resource_register(register_subtring, 's'+str(register_index))
                                     register_index += array_count
                                     fix_line = True
-                                elif resource_type_letter is 'b':
+                                elif resource_type_letter == 'b':
                                     fixed_register_substring = replace_d3d_resource_register(register_subtring, 'b'+str(register_index))
                                     register_index += array_count
                                     fix_line = True
-                                elif resource_type_letter is 't':
+                                elif resource_type_letter == 't':
                                     fixed_register_substring = replace_d3d_resource_register(register_subtring, 't'+str(register_index))
                                     register_index += array_count
                                     fix_line = True
-                                elif resource_type_letter is 'u':
+                                elif resource_type_letter == 'u':
                                     fixed_register_substring = replace_d3d_resource_register(register_subtring, 'u'+str(register_index))
                                     register_index += array_count
                                     fix_line = True
-                                    
+
                                 if fix_line is True:
                                     fixed_line = replace_d3d_register_declaration(line, fixed_register_substring)
                                     line = fixed_line + '\n'

@@ -2608,8 +2608,12 @@ bool platformInitUserInterface()
     // Tell ImGui that we support ImDrawCmd::VtxOffset, otherwise ImGui will always set it to 0
     io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 
+#if !defined(FORGE_HOST_EXTERNAL_INPUT)
+    // Headless host bridges mouse via uiSetExternalInput and never reads gKeyMap (the gainput
+    // update path is compiled out below), so the gainput InputSystem need not be linked.
     extern void InputFillImguiKeyMap(InputEnum * keyMap);
     InputFillImguiKeyMap(gKeyMap);
+#endif
 
     pUserInterface = pAppUI;
     pUserInterface->mFramePadding = float2(ImGui::GetStyle().FramePadding.x, ImGui::GetStyle().FramePadding.y);
@@ -2634,6 +2638,30 @@ void platformExitUserInterface()
     tf_delete(pUserInterface);
 #endif
 }
+
+#if defined(FORGE_HOST_EXTERNAL_INPUT)
+// MGE-XE headless-host input bridge: the host has no window/InputSystem (gainput), so the MW
+// client forwards mouse state over IPC and injects it here instead of UI.cpp reading gainput via
+// inputGetValue(). This is the only thing keeping the headless host off the Input/gainput link.
+// When the host owns the window, define this away and Forge's native InputSystem drives the same
+// UI unchanged. Keyboard/text are intentionally not bridged (mouse-only dev overlay).
+struct UiExternalInput
+{
+    float x, y, wheel;
+    bool  l, r, m, enabled;
+};
+static UiExternalInput gExternalInput = {};
+extern "C" void uiSetExternalInput(float x, float y, float wheel, bool l, bool r, bool m, bool enabled)
+{
+    gExternalInput.x = x;
+    gExternalInput.y = y;
+    gExternalInput.wheel = wheel;
+    gExternalInput.l = l;
+    gExternalInput.r = r;
+    gExternalInput.m = m;
+    gExternalInput.enabled = enabled;
+}
+#endif
 
 void platformUpdateUserInterface(float deltaTime)
 {
@@ -2669,6 +2697,21 @@ void platformUpdateUserInterface(float deltaTime)
     style.FramePadding = { pUserInterface->mFramePadding.x * displayScale, pUserInterface->mFramePadding.y * displayScale };
     style.WindowPadding = { pUserInterface->mWindowPadding.x * displayScale, pUserInterface->mWindowPadding.y * displayScale };
 
+#if defined(FORGE_HOST_EXTERNAL_INPUT)
+    // Headless host: inject the IPC-forwarded mouse state instead of reading gainput. Mouse pos
+    // arrives already in framebuffer pixels (client did ScreenToClient), so no DisplayFramebufferScale.
+    // The headless host runs over MW, which hides the OS cursor in the 3D scene — so ImGui must
+    // draw its own software cursor (rendered into the UI draw data) whenever the bridge is active.
+    io.MouseDrawCursor = gExternalInput.enabled;
+    if (gExternalInput.enabled)
+    {
+        io.AddMousePosEvent(gExternalInput.x, gExternalInput.y);
+        io.AddMouseWheelEvent(0.0f, gExternalInput.wheel);
+        io.AddMouseButtonEvent(ImGuiMouseButton_Left, gExternalInput.l);
+        io.AddMouseButtonEvent(ImGuiMouseButton_Right, gExternalInput.r);
+        io.AddMouseButtonEvent(ImGuiMouseButton_Middle, gExternalInput.m);
+    }
+#else
     for (uint32_t k = ImGuiKey_NamedKey_BEGIN; k <= ImGuiKey_GamepadR3; ++k)
     {
         if (!gKeyMap[k - ImGuiKey_NamedKey_BEGIN])
@@ -2700,6 +2743,7 @@ void platformUpdateUserInterface(float deltaTime)
             io.AddInputCharacter(chars[i]);
         }
     }
+#endif
 
     // (UIComponent*)[dyn_size]
     UIComponent** activeComponents = NULL;

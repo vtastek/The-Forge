@@ -240,6 +240,7 @@ COMPILE_ASSERT(sizeof(ssize_t) == sizeof(int64_t));
 
 // Whitelist of compiler versions
 #if (_MSC_VER == 1929) // VS 2019 all VC++ compilers
+#elif (_MSC_VER >= 1930 && _MSC_VER < 2000) // VS 2022 (v143) — MGE-XE host toolset
 #else
 #pragma message("Bad Visual Studio version: (" QUOTE(_MSC_VER) " " QUOTE(_MSC_FULL_VER) " " QUOTE(_MSC_BUILD) ").")
 #error "Bad Visual Studio version"
@@ -302,7 +303,10 @@ COMPILE_ASSERT(sizeof(ssize_t) == sizeof(int64_t));
 //////////////////////////////////////////////
 // #define ENABLE_MATH_CHECKS // Enables low level math library debug checks like SIMD variable alignment checks
 #define ENABLE_FORGE_SCRIPTING
-#define ENABLE_FORGE_RELOAD_SHADER
+// MGE-XE: headless renderer host — ReloadServer pulls in the whole UI/Lua/Input
+// app layer (uiAddComponentWidget/luaRegisterWidget/inputGetValue), which we do
+// not compile. Disable it; shaders are precompiled offline via fsl.py anyway.
+// #define ENABLE_FORGE_RELOAD_SHADER
 #define ENABLE_FORGE_UI
 #define ENABLE_FORGE_FONTS
 #define ENABLE_FORGE_INPUT

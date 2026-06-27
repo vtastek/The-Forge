@@ -1847,7 +1847,7 @@ void util_enumerate_gpus(IDXGIFactory6* dxgiFactory, uint32_t* pGpuCount, DXGPUI
         COM_CALL(GetDesc3, adapter, &desc);
 
         // Ignore Microsoft Driver
-        if (!(desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE))
+        if (!(desc.Flags & (DXGI_ADAPTER_FLAG3)DXGI_ADAPTER_FLAG_SOFTWARE))
         {
             for (uint32_t level = 0; level < sizeof(feature_levels) / sizeof(feature_levels[0]); ++level)
             {
