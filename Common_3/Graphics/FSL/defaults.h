@@ -75,7 +75,28 @@
                "addressU = TEXTURE_ADDRESS_BORDER, addressV = TEXTURE_ADDRESS_BORDER, addressW = TEXTURE_ADDRESS_BORDER),"           \
                "StaticSampler(s10, space = 100,"                                                                                     \
                "filter = FILTER_ANISOTROPIC, maxAnisotropy = 8,"                                                                     \
-               "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP)"
+               "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP),"                 \
+               "StaticSampler(s11, space = 100,"                                                                                     \
+               "filter = FILTER_ANISOTROPIC, maxAnisotropy = 8,"                                                                     \
+               "addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_CLAMP),"              \
+               "StaticSampler(s12, space = 100,"                                                                                     \
+               "filter = FILTER_ANISOTROPIC, maxAnisotropy = 8,"                                                                     \
+               "addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP),"                \
+               "StaticSampler(s13, space = 100,"                                                                                     \
+               "filter = FILTER_ANISOTROPIC, maxAnisotropy = 8,"                                                                     \
+               "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_WRAP),"                \
+               "StaticSampler(s14, space = 100,"                                                                                     \
+               "filter = FILTER_ANISOTROPIC, maxAnisotropy = 2,"                                                                     \
+               "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP),"                 \
+               "StaticSampler(s15, space = 100,"                                                                                     \
+               "filter = FILTER_ANISOTROPIC, maxAnisotropy = 2,"                                                                     \
+               "addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_CLAMP),"              \
+               "StaticSampler(s16, space = 100,"                                                                                     \
+               "filter = FILTER_ANISOTROPIC, maxAnisotropy = 2,"                                                                     \
+               "addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP),"                \
+               "StaticSampler(s17, space = 100,"                                                                                     \
+               "filter = FILTER_ANISOTROPIC, maxAnisotropy = 2,"                                                                     \
+               "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_WRAP)"
 
 #define ComputeRootSignature                                                                                    \
     DESCRIPTOR_TABLE(3)                                                                                         \
@@ -115,7 +136,28 @@
     "addressU = TEXTURE_ADDRESS_BORDER, addressV = TEXTURE_ADDRESS_BORDER, addressW = TEXTURE_ADDRESS_BORDER)," \
     "StaticSampler(s10, space = 100,"                                                                           \
     "filter = FILTER_ANISOTROPIC, maxAnisotropy = 8,"                                                           \
-    "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP)"
+    "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP),"       \
+    "StaticSampler(s11, space = 100,"                                                                           \
+    "filter = FILTER_ANISOTROPIC, maxAnisotropy = 8,"                                                           \
+    "addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_CLAMP),"    \
+    "StaticSampler(s12, space = 100,"                                                                           \
+    "filter = FILTER_ANISOTROPIC, maxAnisotropy = 8,"                                                           \
+    "addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP),"      \
+    "StaticSampler(s13, space = 100,"                                                                           \
+    "filter = FILTER_ANISOTROPIC, maxAnisotropy = 8,"                                                           \
+    "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_WRAP),"      \
+    "StaticSampler(s14, space = 100,"                                                                           \
+    "filter = FILTER_ANISOTROPIC, maxAnisotropy = 2,"                                                           \
+    "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP),"       \
+    "StaticSampler(s15, space = 100,"                                                                           \
+    "filter = FILTER_ANISOTROPIC, maxAnisotropy = 2,"                                                           \
+    "addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_CLAMP),"    \
+    "StaticSampler(s16, space = 100,"                                                                           \
+    "filter = FILTER_ANISOTROPIC, maxAnisotropy = 2,"                                                           \
+    "addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_WRAP, addressW = TEXTURE_ADDRESS_WRAP),"      \
+    "StaticSampler(s17, space = 100,"                                                                           \
+    "filter = FILTER_ANISOTROPIC, maxAnisotropy = 2,"                                                           \
+    "addressU = TEXTURE_ADDRESS_WRAP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_WRAP)"
 
 #define ROOT_PARAM_Persistent_SAMPLER 4
 #define ROOT_PARAM_Persistent         3
@@ -163,6 +205,44 @@ RS_STATIC_SAMPLER(SamplerState, gSamplerTrilinearBorder, 9, 100, FILTER_LINEAR, 
                   ADDRESS_MODE_CLAMP_TO_BORDER, ADDRESS_MODE_CLAMP_TO_BORDER, CMP_NEVER)
 RS_STATIC_SAMPLER(SamplerState, gSamplerAnisotropic, 10, 100, FILTER_LINEAR, MIPMAP_MODE_LINEAR, 8, ADDRESS_MODE_REPEAT,
                   ADDRESS_MODE_REPEAT, ADDRESS_MODE_REPEAT, CMP_NEVER)
+
+// !! A STATIC SAMPLER LIVES IN TWO PLACES AND NOTHING CHECKS THAT THEY AGREE !!
+// The RS_STATIC_SAMPLER lines below only DECLARE the HLSL variable at register s<n>, space100. The
+// actual root signature is the DefaultRootSignature / ComputeRootSignature *string* at the top of
+// this file, and a sampler must be added to BOTH. Declaring it here alone compiles CLEAN through DXC
+// — no error, no warning — and then hangs the GPU at runtime the first time a shader samples with
+// it, because the shader references a static sampler the root signature never declared. That cost a
+// debugging round-trip; if you add a sampler, add it in both places in the same edit.
+//
+// MGE XE (vendor addition): anisotropic CLAMP variants. Stock The Forge ships anisotropic in REPEAT
+// only, and no mixed-address sampler at all — so a renderer that must honour a per-mesh address mode
+// has nowhere to put it. Morrowind's NiTexturingProperty::Map::clampMode has exactly four values
+// (CLAMP_S_CLAMP_T, CLAMP_S_WRAP_T, WRAP_S_CLAMP_T, WRAP_S_WRAP_T); these three plus the stock
+// gSamplerAnisotropic (= WRAP_S_WRAP_T) cover all four with IDENTICAL filtering, so a clamped mesh
+// is not silently demoted to trilinear while everything around it stays anisotropic.
+// S = U, T = V. A dynamic sampler is NOT an option here: FSL assigns SRV and sampler descriptor
+// offsets from one running per-set counter, so a sampler in a set that also holds a texture ARRAY
+// lands at the wrong sampler-heap slot (see mgeHost64/shaders/FSL/opaque.srt.h).
+RS_STATIC_SAMPLER(SamplerState, gSamplerAnisoClampClamp, 11, 100, FILTER_LINEAR, MIPMAP_MODE_LINEAR, 8, ADDRESS_MODE_CLAMP_TO_EDGE,
+                  ADDRESS_MODE_CLAMP_TO_EDGE, ADDRESS_MODE_CLAMP_TO_EDGE, CMP_NEVER)
+RS_STATIC_SAMPLER(SamplerState, gSamplerAnisoClampWrap, 12, 100, FILTER_LINEAR, MIPMAP_MODE_LINEAR, 8, ADDRESS_MODE_CLAMP_TO_EDGE,
+                  ADDRESS_MODE_REPEAT, ADDRESS_MODE_REPEAT, CMP_NEVER)
+RS_STATIC_SAMPLER(SamplerState, gSamplerAnisoWrapClamp, 13, 100, FILTER_LINEAR, MIPMAP_MODE_LINEAR, 8, ADDRESS_MODE_REPEAT,
+                  ADDRESS_MODE_CLAMP_TO_EDGE, ADDRESS_MODE_REPEAT, CMP_NEVER)
+
+// MGE XE (vendor addition): the SAME four address modes at 2x anisotropy instead of 8x. Alpha-test
+// and alpha-blended draws are the overdraw-heavy, texture-fetch-heavy part of the frame (foliage,
+// grates, banners, glass), and they gain the least from high AF — so the renderer can drop just
+// those to 2x as a perf trick while opaque geometry keeps 8x. Live A/B toggle on the host; the
+// address mode is orthogonal, hence the full 4x2 matrix rather than a single low-AF sampler.
+RS_STATIC_SAMPLER(SamplerState, gSampler2xWrapWrap, 14, 100, FILTER_LINEAR, MIPMAP_MODE_LINEAR, 2, ADDRESS_MODE_REPEAT,
+                  ADDRESS_MODE_REPEAT, ADDRESS_MODE_REPEAT, CMP_NEVER)
+RS_STATIC_SAMPLER(SamplerState, gSampler2xClampClamp, 15, 100, FILTER_LINEAR, MIPMAP_MODE_LINEAR, 2, ADDRESS_MODE_CLAMP_TO_EDGE,
+                  ADDRESS_MODE_CLAMP_TO_EDGE, ADDRESS_MODE_CLAMP_TO_EDGE, CMP_NEVER)
+RS_STATIC_SAMPLER(SamplerState, gSampler2xClampWrap, 16, 100, FILTER_LINEAR, MIPMAP_MODE_LINEAR, 2, ADDRESS_MODE_CLAMP_TO_EDGE,
+                  ADDRESS_MODE_REPEAT, ADDRESS_MODE_REPEAT, CMP_NEVER)
+RS_STATIC_SAMPLER(SamplerState, gSampler2xWrapClamp, 17, 100, FILTER_LINEAR, MIPMAP_MODE_LINEAR, 2, ADDRESS_MODE_REPEAT,
+                  ADDRESS_MODE_CLAMP_TO_EDGE, ADDRESS_MODE_REPEAT, CMP_NEVER)
 
 END_RS_STATIC_SAMPLERS()
 //
