@@ -36,12 +36,23 @@
     "CBV(b0, numDescriptors = unbounded, space = " #space ", offset = 0)," \
     "UAV(u0, numDescriptors = unbounded, space = " #space ", offset = 0)),"
 
+// MGE: the Persistent set (space 0) holds the bindless gTextures array, which the host rewrites while
+// frames execute (it records frame N+1 while its GPU draws N). DESCRIPTORS_VOLATILE makes writing a
+// descriptor that no executing command reads legal; the default (static) forbids ANY change to the
+// range until every command list that bound it has finished. See MGE-XE
+// tasks/forge-pipeline-depth.md (P4 refinement).
+#define DESCRIPTOR_TABLE_PERSISTENT(space)                                                              \
+    "DescriptorTable("                                                                                  \
+    "SRV(t0, numDescriptors = unbounded, space = " #space ", offset = 0, flags = DESCRIPTORS_VOLATILE)," \
+    "CBV(b0, numDescriptors = unbounded, space = " #space ", offset = 0),"                              \
+    "UAV(u0, numDescriptors = unbounded, space = " #space ", offset = 0)),"
+
 #define SAMPLER_DESCRIPTOR_TABLE(space) \
     "DescriptorTable("                  \
     "SAMPLER(s0, numDescriptors = unbounded, space = " #space ", offset = 0)),"
 
 #define DefaultRootSignature                                                                                                         \
-    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)," DESCRIPTOR_TABLE(3) DESCRIPTOR_TABLE(2) DESCRIPTOR_TABLE(1) DESCRIPTOR_TABLE(0) \
+    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)," DESCRIPTOR_TABLE(3) DESCRIPTOR_TABLE(2) DESCRIPTOR_TABLE(1) DESCRIPTOR_TABLE_PERSISTENT(0) \
         SAMPLER_DESCRIPTOR_TABLE(                                                                                                    \
             0) "StaticSampler(s0, space = 100,"                                                                                      \
                "filter = FILTER_MIN_MAG_MIP_POINT,"                                                                                  \
@@ -102,7 +113,7 @@
     DESCRIPTOR_TABLE(3)                                                                                         \
     DESCRIPTOR_TABLE(2)                                                                                         \
     DESCRIPTOR_TABLE(1)                                                                                         \
-    DESCRIPTOR_TABLE(0)                                                                                         \
+    DESCRIPTOR_TABLE_PERSISTENT(0)                                                                              \
     SAMPLER_DESCRIPTOR_TABLE(0)                                                                                 \
     "StaticSampler(s0, space = 100,"                                                                            \
     "filter = FILTER_MIN_MAG_MIP_POINT,"                                                                        \
